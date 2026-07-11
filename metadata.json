@@ -1,0 +1,6 @@
+{
+  "name": "Cyber Fortress",
+  "description": "An all-in-one cybersecurity platform for security posture monitoring, threat intelligence, vulnerability scanning, password vaulting, and AI-powered defense recommendations.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

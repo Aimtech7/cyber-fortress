@@ -1,0 +1,286 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "A user profile in the Cyber Fortress system.",
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "User email address"
+        },
+        "role": {
+          "type": "string",
+          "description": "Security role of the user"
+        },
+        "fullName": {
+          "type": "string",
+          "maxLength": 128,
+          "description": "Full name of the user"
+        },
+        "orgName": {
+          "type": "string",
+          "maxLength": 128,
+          "description": "Organization name"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp when the user registered"
+        }
+      },
+      "required": ["email", "role", "fullName", "createdAt"]
+    },
+    "SecurityScan": {
+      "title": "SecurityScan",
+      "description": "A website vulnerability scan result.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Scan unique identifier"
+        },
+        "target": {
+          "type": "string",
+          "maxLength": 512,
+          "description": "Target domain or URL scanned"
+        },
+        "type": {
+          "type": "string",
+          "maxLength": 128,
+          "description": "Type of vulnerability scan conducted"
+        },
+        "status": {
+          "type": "string",
+          "description": "Status of scan (Completed, Scanning, Failed)"
+        },
+        "riskScore": {
+          "type": "integer",
+          "description": "Calculated risk metric between 0 and 100"
+        },
+        "findingsCount": {
+          "type": "integer",
+          "description": "Number of discovered vulnerability finding elements"
+        },
+        "scannedBy": {
+          "type": "string",
+          "description": "User identifier who initiated the scan"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Scan timestamp"
+        }
+      },
+      "required": ["id", "target", "type", "status", "riskScore", "findingsCount", "scannedBy", "createdAt"]
+    },
+    "PasswordVaultItem": {
+      "title": "PasswordVaultItem",
+      "description": "A credential item stored in the Secrets Vault.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Vault credential element identifier"
+        },
+        "title": {
+          "type": "string",
+          "maxLength": 128,
+          "description": "Display name of the credential entry"
+        },
+        "username": {
+          "type": "string",
+          "maxLength": 128,
+          "description": "Username or login identity"
+        },
+        "password": {
+          "type": "string",
+          "maxLength": 128,
+          "description": "Encrypted or cleartext credential password"
+        },
+        "url": {
+          "type": "string",
+          "maxLength": 512,
+          "description": "Target hostname, platform or connection string"
+        },
+        "notes": {
+          "type": "string",
+          "maxLength": 1024,
+          "description": "Optional details or administrative reminders"
+        },
+        "strength": {
+          "type": "string",
+          "enum": ["Strong", "Medium", "Weak"],
+          "description": "Algorithmic strength metric"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp when the credential was added"
+        },
+        "ownerId": {
+          "type": "string",
+          "description": "User UID who owns this vault entry"
+        }
+      },
+      "required": ["id", "title", "username", "password", "strength", "createdAt", "ownerId"]
+    },
+    "ThreatIndicator": {
+      "title": "ThreatIndicator",
+      "description": "A threat intelligence indicator of compromise (IOC).",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Threat identifier"
+        },
+        "source": {
+          "type": "string",
+          "maxLength": 128,
+          "description": "Source publisher or reporting feed"
+        },
+        "indicator": {
+          "type": "string",
+          "maxLength": 256,
+          "description": "The IP address, domain, or CVE identifier"
+        },
+        "type": {
+          "type": "string",
+          "maxLength": 128,
+          "description": "IOC category (e.g. Malicious IP, CVE exploit)"
+        },
+        "severity": {
+          "type": "string",
+          "enum": ["Critical", "High", "Medium", "Low"],
+          "description": "Danger ranking"
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 1024,
+          "description": "Intelligence description context"
+        },
+        "timestamp": {
+          "type": "string",
+          "description": "Publish/logging timestamp"
+        }
+      },
+      "required": ["id", "source", "indicator", "type", "severity", "timestamp"]
+    },
+    "AuditLog": {
+      "title": "AuditLog",
+      "description": "A security compliant trace of user actions.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Audit trace entry identifier"
+        },
+        "userId": {
+          "type": "string",
+          "description": "User UID who triggered the action"
+        },
+        "userEmail": {
+          "type": "string",
+          "format": "email",
+          "description": "User email address"
+        },
+        "action": {
+          "type": "string",
+          "maxLength": 128,
+          "description": "Name of action executed"
+        },
+        "details": {
+          "type": "string",
+          "maxLength": 1024,
+          "description": "Operational context and parameters"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["Success", "Failure", "Warning"],
+          "description": "Status result of the action"
+        },
+        "timestamp": {
+          "type": "string",
+          "description": "Timestamp when logged"
+        }
+      },
+      "required": ["id", "userId", "userEmail", "action", "details", "status", "timestamp"]
+    },
+    "AcademyProfile": {
+      "title": "AcademyProfile",
+      "description": "Progress record of SecOps Academy students.",
+      "type": "object",
+      "properties": {
+        "xp": {
+          "type": "integer",
+          "description": "Accumulated experience points"
+        },
+        "level": {
+          "type": "integer",
+          "description": "Current student level"
+        },
+        "streak": {
+          "type": "integer",
+          "description": "Consecutive days studied"
+        },
+        "rank": {
+          "type": "string",
+          "description": "Title tier based on XP milestones"
+        },
+        "completedLessonIds": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Array of resolved lesson elements"
+        },
+        "completedCourseIds": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Array of completed training courses"
+        },
+        "completedCtfIds": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Array of completed CTF security challenges"
+        },
+        "unlockedBadges": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Acquired achievement badges"
+        },
+        "weeklyStudyMinutes": {
+          "type": "integer",
+          "description": "Study time in minutes this week"
+        },
+        "dailyGoalMinutes": {
+          "type": "integer",
+          "description": "Configured learning target minutes"
+        }
+      },
+      "required": ["xp", "level", "streak", "rank", "completedLessonIds", "completedCourseIds", "completedCtfIds", "unlockedBadges", "weeklyStudyMinutes", "dailyGoalMinutes"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profile directory records."
+    },
+    "/scans/{scanId}": {
+      "schema": "SecurityScan",
+      "description": "Historical website security scan reports."
+    },
+    "/vault/{itemId}": {
+      "schema": "PasswordVaultItem",
+      "description": "Credentials and keys stored by platform users."
+    },
+    "/threats/{threatId}": {
+      "schema": "ThreatIndicator",
+      "description": "Security Threat Intelligence Indicators of Compromise (IOCs)."
+    },
+    "/auditLogs/{logId}": {
+      "schema": "AuditLog",
+      "description": "Operational platform-wide audit trails."
+    },
+    "/academyProfiles/{userId}": {
+      "schema": "AcademyProfile",
+      "description": "SecOps learning academy student tracker files."
+    }
+  }
+}

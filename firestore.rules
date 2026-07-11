@@ -1,0 +1,191 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Global Safety Net - Default Deny Catch-All
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Core Reusable Primitive Helpers ---
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // --- 1. Users Profile Collection Security ---
+    match /users/{userId} {
+      allow read: if isSignedIn();
+      
+      allow create: if (
+        isOwner(userId) &&
+        isValidId(userId) &&
+        incoming().email == request.auth.token.email &&
+        incoming().fullName is string && incoming().fullName.size() <= 128 &&
+        incoming().role in ['Security Analyst', 'Administrator', 'Registered User'] &&
+        (incoming().role != 'Administrator') // Prevent self-elevation to admin
+      );
+
+      allow update: if (
+        isOwner(userId) &&
+        incoming().email == existing().email &&
+        incoming().role == existing().role && // Prevent role modification
+        incoming().fullName is string && incoming().fullName.size() <= 128 &&
+        incoming().diff(existing()).affectedKeys().hasOnly(['fullName', 'orgName'])
+      );
+
+      allow delete: if false; // Profiles cannot be deleted from the client
+    }
+
+    // --- 2. Website Security Scans Collection Security ---
+    match /scans/{scanId} {
+      allow read: if isSignedIn();
+      
+      allow create: if (
+        isSignedIn() &&
+        isValidId(scanId) &&
+        incoming().id == scanId &&
+        incoming().scannedBy == request.auth.uid &&
+        incoming().target is string && incoming().target.size() <= 512 &&
+        incoming().type is string && incoming().type.size() <= 128 &&
+        incoming().status in ['Completed', 'Scanning', 'Failed'] &&
+        incoming().riskScore is int && incoming().riskScore >= 0 && incoming().riskScore <= 100 &&
+        incoming().findingsCount is int
+      );
+
+      allow update, delete: if false; // Historic scan reports are read-only and immutable
+    }
+
+    // --- 3. Secrets Credentials Vault Collection Security ---
+    match /vault/{itemId} {
+      allow read: if (
+        isSignedIn() &&
+        resource.data.ownerId == request.auth.uid
+      );
+
+      allow create: if (
+        isSignedIn() &&
+        isValidId(itemId) &&
+        incoming().id == itemId &&
+        incoming().ownerId == request.auth.uid &&
+        incoming().title is string && incoming().title.size() <= 128 &&
+        incoming().username is string && incoming().username.size() <= 128 &&
+        incoming().password is string && incoming().password.size() <= 128 &&
+        incoming().strength in ['Strong', 'Medium', 'Weak']
+      );
+
+      allow update: if (
+        isSignedIn() &&
+        resource.data.ownerId == request.auth.uid &&
+        incoming().ownerId == request.auth.uid &&
+        incoming().id == existing().id &&
+        incoming().title is string && incoming().title.size() <= 128 &&
+        incoming().username is string && incoming().username.size() <= 128 &&
+        incoming().password is string && incoming().password.size() <= 128 &&
+        incoming().strength in ['Strong', 'Medium', 'Weak'] &&
+        incoming().diff(existing()).affectedKeys().hasOnly(['title', 'username', 'password', 'url', 'notes', 'strength'])
+      );
+
+      allow delete: if (
+        isSignedIn() &&
+        resource.data.ownerId == request.auth.uid
+      );
+    }
+
+    // --- 4. Threat Intelligence Feed Collection Security ---
+    match /threats/{threatId} {
+      allow read: if isSignedIn();
+      
+      allow create: if (
+        isSignedIn() &&
+        isValidId(threatId) &&
+        incoming().id == threatId &&
+        incoming().indicator is string && incoming().indicator.size() <= 256 &&
+        incoming().type is string && incoming().type.size() <= 128 &&
+        incoming().severity in ['Critical', 'High', 'Medium', 'Low'] &&
+        incoming().source is string && incoming().source.size() <= 128
+      );
+
+      allow update: if (
+        isSignedIn() &&
+        incoming().id == existing().id &&
+        incoming().indicator is string && incoming().indicator.size() <= 256 &&
+        incoming().type is string && incoming().type.size() <= 128 &&
+        incoming().severity in ['Critical', 'High', 'Medium', 'Low'] &&
+        incoming().source is string && incoming().source.size() <= 128 &&
+        incoming().diff(existing()).affectedKeys().hasOnly(['indicator', 'type', 'severity', 'description'])
+      );
+
+      allow delete: if isSignedIn();
+    }
+
+    // --- 5. Security Audit Logs Trail Collection Security ---
+    match /auditLogs/{logId} {
+      allow read: if isSignedIn();
+      
+      allow create: if (
+        isSignedIn() &&
+        isValidId(logId) &&
+        incoming().id == logId &&
+        incoming().userId == request.auth.uid &&
+        incoming().userEmail == request.auth.token.email &&
+        incoming().action is string && incoming().action.size() <= 128 &&
+        incoming().status in ['Success', 'Failure', 'Warning']
+      );
+
+      allow update, delete: if false; // Compliance audits are write-once, completely immutable
+    }
+
+    // --- 6. SecOps Academy Student Profiles Collection Security ---
+    match /academyProfiles/{userId} {
+      allow read: if isSignedIn();
+      
+      allow create: if (
+        isOwner(userId) &&
+        isValidId(userId) &&
+        incoming().xp is int &&
+        incoming().level is int &&
+        incoming().streak is int &&
+        incoming().rank is string &&
+        incoming().completedLessonIds is list &&
+        incoming().completedCourseIds is list &&
+        incoming().completedCtfIds is list &&
+        incoming().unlockedBadges is list
+      );
+
+      allow update: if (
+        isOwner(userId) &&
+        incoming().xp is int && incoming().xp >= 0 &&
+        incoming().level is int && incoming().level >= 1 &&
+        incoming().streak is int &&
+        incoming().rank is string &&
+        incoming().completedLessonIds is list &&
+        incoming().completedCourseIds is list &&
+        incoming().completedCtfIds is list &&
+        incoming().unlockedBadges is list &&
+        incoming().weeklyStudyMinutes is int &&
+        incoming().dailyGoalMinutes is int &&
+        // Secure Invariant: XP/Level can only advance forward or stay same, preventing rollback hacks
+        incoming().xp >= existing().xp &&
+        incoming().level >= existing().level
+      );
+
+      allow delete: if false; // Academic records are persistent and cannot be deleted by student
+    }
+  }
+}
